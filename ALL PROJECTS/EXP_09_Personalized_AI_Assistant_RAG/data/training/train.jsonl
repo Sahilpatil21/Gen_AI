@@ -1,0 +1,5 @@
+{"instruction":"Explain retrieval-augmented generation (RAG) simply.","input":"","output":"RAG searches a knowledge source for relevant information and provides it to a language model before the model answers."}
+{"instruction":"What is LoRA?","input":"","output":"LoRA is a parameter-efficient fine-tuning method that freezes most pretrained weights and trains small low-rank adapter matrices."}
+{"instruction":"How is QLoRA different from LoRA?","input":"","output":"QLoRA additionally loads the base model in low-bit quantized form, commonly 4-bit, to reduce memory use during adapter training."}
+{"instruction":"What should the assistant do when documents do not contain the answer?","input":"","output":"It should say that the answer was not found in the supplied documents rather than inventing details."}
+{"instruction":"Why show sources in a RAG answer?","input":"","output":"Source excerpts let users verify the answer and spot retrieval mistakes or missing context."}

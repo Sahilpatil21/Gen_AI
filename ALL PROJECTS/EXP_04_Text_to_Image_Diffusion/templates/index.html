@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Image Generation Studio | Stable Diffusion v1.5 (Exercise 4)</title>
+  <meta name="description" content="State-of-the-art Text-to-Image Generation Web Application powered by Stable Diffusion v1.5. Built for GenAI Exercise 4 with multi-engine acceleration and rich artistic controls.">
+  <meta name="keywords" content="Stable Diffusion, Text to Image, AI Art, Generative AI, Diffusers, PyTorch, Exercise 4">
+  <meta name="author" content="GenAI Lab">
+
+  <!-- Google Fonts: Outfit & Inter for high-end typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header" id="app-header">
+    <div class="header-container">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke-linejoin="round" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>Lumina <span>GenAI Studio</span></h1>
+          <span class="badge-exercise">Exercise 4 · SD v1.5</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Hardware Telemetry Pill -->
+        <div class="telemetry-pill" id="telemetry-pill" title="Hardware Acceleration Status">
+          <span class="pulse-dot active" id="telemetry-dot"></span>
+          <span class="telemetry-label" id="telemetry-label">Detecting Hardware...</span>
+        </div>
+
+        <button class="nav-btn" id="btn-open-history" title="Open Generation History">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>History</span>
+          <span class="badge-count" id="history-badge">0</span>
+        </button>
+
+        <button class="nav-btn" id="btn-open-docs" title="Architecture & Model Info">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span>Architecture</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application Workspace -->
+  <main class="studio-layout" id="main-studio">
+    <!-- Left Column: Controls & Prompting Studio -->
+    <section class="control-panel glass-panel" id="control-panel">
+      <div class="panel-header">
+        <h2>Creation Studio</h2>
+        <span class="panel-subtitle">Synthesize imagery with diffusion latents</span>
+      </div>
+
+      <form id="generation-form" onsubmit="return false;">
+        <!-- Prompt Box -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="prompt-input">Prompt Description <span class="required">*</span></label>
+            <div class="prompt-actions">
+              <button type="button" class="action-link" id="btn-surprise-me" title="Get a random creative prompt">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+                Surprise Me
+              </button>
+              <button type="button" class="action-link" id="btn-clear-prompt" title="Clear prompt text">Clear</button>
+            </div>
+          </div>
+          <div class="textarea-wrapper">
+            <textarea
+              id="prompt-input"
+              rows="4"
+              placeholder="Describe what you want to see... e.g. A majestic snow leopard perched atop a misty Himalayan summit at golden hour, ultra-detailed 8k, cinematic lighting"
+              maxlength="1000"
+              required
+            ></textarea>
+            <span class="char-counter" id="char-counter">0 / 1000</span>
+          </div>
+
+          <!-- Quick Suggestion Pills -->
+          <div class="prompt-chips-container">
+            <span class="chips-title">Inspirations:</span>
+            <div class="chips-list" id="prompt-chips">
+              <!-- Dynamically populated from JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Style Selector Cards -->
+        <div class="form-group">
+          <div class="label-row">
+            <label>Artistic Style Preset</label>
+            <span class="selected-style-indicator" id="selected-style-name">Realistic</span>
+          </div>
+          <input type="hidden" id="selected-style-input" value="Realistic">
+          
+          <div class="styles-grid" id="styles-grid">
+            <!-- Dynamically populated via JS/Jinja -->
+            {% for style_name, style_data in styles.items() %}
+            <div class="style-card {% if style_name == 'Realistic' %}active{% endif %}" data-style="{{ style_name }}" id="style-card-{{ loop.index }}">
+              <div class="style-card-glow"></div>
+              <div class="style-card-content">
+                <div class="style-badge-icon">
+                  <span class="style-dot"></span>
+                </div>
+                <div class="style-info">
+                  <h4 class="style-title">{{ style_name }}</h4>
+                  <p class="style-desc">{{ style_data.description }}</p>
+                </div>
+                <div class="style-check">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Aspect Ratio Selector -->
+        <div class="form-group">
+          <label>Aspect Ratio & Resolution</label>
+          <div class="ratio-selector" id="ratio-selector">
+            {% for ratio_name, dimensions in aspect_ratios.items() %}
+            <button
+              type="button"
+              class="ratio-pill {% if loop.first %}active{% endif %}"
+              data-ratio="{{ ratio_name }}"
+              id="ratio-btn-{{ loop.index }}"
+            >
+              <span class="ratio-box ratio-{{ loop.index }}"></span>
+              <span class="ratio-text">{{ ratio_name }}</span>
+              <span class="ratio-dim">{{ dimensions[0] }}x{{ dimensions[1] }}</span>
+            </button>
+            {% endfor %}
+          </div>
+          <input type="hidden" id="selected-ratio-input" value="1:1 (Square)">
+        </div>
+
+        <!-- Advanced Parameters Accordion -->
+        <div class="accordion-item" id="accordion-advanced">
+          <button type="button" class="accordion-toggle" id="btn-toggle-advanced">
+            <span class="toggle-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              <span>Fine-Tuning & Model Engine</span>
+            </span>
+            <svg class="toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          <div class="accordion-content" id="advanced-content">
+            <!-- Negative Prompt -->
+            <div class="form-group">
+              <label for="negative-prompt-input">Negative Prompt (What to Avoid)</label>
+              <textarea
+                id="negative-prompt-input"
+                rows="2"
+                placeholder="Elements you do not want in the output..."
+              >{{ default_negative }}</textarea>
+              <div class="quick-neg-tags">
+                <span class="tag-label">Quick add:</span>
+                <button type="button" class="neg-tag" data-text="watermark, text, signature">+ Watermark</button>
+                <button type="button" class="neg-tag" data-text="extra limbs, deformed hands, bad anatomy">+ Extra Limbs</button>
+                <button type="button" class="neg-tag" data-text="blurry, low resolution, out of focus">+ Blur</button>
+                <button type="button" class="neg-tag" data-text="oversaturated, distorted, cartoonish">+ Distorted</button>
+              </div>
+            </div>
+
+            <!-- Sliders Grid -->
+            <div class="sliders-grid">
+              <!-- Batch Count -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <label for="batch-slider">Images Count</label>
+                  <span class="slider-val" id="batch-val">1</span>
+                </div>
+                <input type="range" id="batch-slider" min="1" max="4" step="1" value="1">
+                <span class="slider-hint">Number of variations (1-4)</span>
+              </div>
+
+              <!-- Inference Steps -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <label for="steps-slider">Inference Steps</label>
+                  <span class="slider-val" id="steps-val">25</span>
+                </div>
+                <input type="range" id="steps-slider" min="10" max="50" step="1" value="25">
+                <span class="slider-hint">Balance speed vs fine detail (20-30 recommended)</span>
+              </div>
+
+              <!-- Guidance Scale (CFG) -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <label for="cfg-slider">Guidance Scale (CFG)</label>
+                  <span class="slider-val" id="cfg-val">7.5</span>
+                </div>
+                <input type="range" id="cfg-slider" min="1.0" max="20.0" step="0.5" value="7.5">
+                <span class="slider-hint">Prompt adherence strength (7.0 - 8.5 ideal)</span>
+              </div>
+
+              <!-- Seed Input -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <label for="seed-input">Seed (-1 for Random)</label>
+                  <button type="button" class="action-link" id="btn-random-seed">Dice</button>
+                </div>
+                <div class="seed-input-wrapper">
+                  <input type="number" id="seed-input" value="-1" placeholder="-1 (Random)">
+                  <button type="button" class="seed-lock-btn" id="btn-lock-seed" title="Lock current seed">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  </button>
+                </div>
+                <span class="slider-hint">Set fixed integer to replicate exact result</span>
+              </div>
+            </div>
+
+            <!-- Engine Selection Radio Group -->
+            <div class="form-group engine-group">
+              <label>Processing Engine</label>
+              <div class="engine-options">
+                <label class="engine-card">
+                  <input type="radio" name="engine" value="auto" checked>
+                  <div class="engine-content">
+                    <span class="engine-title">Smart Auto Engine</span>
+                    <span class="engine-desc">Automatically selects optimal execution based on hardware telemetry</span>
+                  </div>
+                </label>
+                <label class="engine-card">
+                  <input type="radio" name="engine" value="cloud_ai">
+                  <div class="engine-content">
+                    <span class="engine-title">Cloud AI (Fast 8K)</span>
+                    <span class="engine-desc">Instant 8K Stable Diffusion generation without GPU memory limits</span>
+                  </div>
+                </label>
+                <label class="engine-card">
+                  <input type="radio" name="engine" value="local_diffusers">
+                  <div class="engine-content">
+                    <span class="engine-title">Local Diffusers (SD v1.5)</span>
+                    <span class="engine-desc">Local PyTorch pipeline with attention slicing & CPU offload</span>
+                  </div>
+                </label>
+                <label class="engine-card">
+                  <input type="radio" name="engine" value="offline_canvas">
+                  <div class="engine-content">
+                    <span class="engine-title">Neural Artistic Canvas</span>
+                    <span class="engine-desc">Lightweight offline procedural fallback</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit & Clear Controls -->
+        <div class="submit-row">
+          <button type="submit" class="generate-btn" id="btn-generate">
+            <span class="btn-glow"></span>
+            <span class="btn-text">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span>Generate Masterpiece</span>
+            </span>
+            <span class="keyboard-shortcut">Ctrl+Enter</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Right Column: Canvas, Live View, and Gallery -->
+    <section class="viewport-panel glass-panel" id="viewport-panel">
+      <!-- Panel Header with controls -->
+      <div class="viewport-header">
+        <div class="header-left">
+          <h3>Generated Output</h3>
+          <span class="status-indicator" id="status-text">Ready to synthesize</span>
+        </div>
+        <div class="header-right" id="viewport-actions" style="display: none;">
+          <a href="#" class="action-btn-pill" id="btn-download-zip" download title="Download all batch outputs as ZIP archive">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Download All (ZIP)</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Live Loading & Progress Bar Component -->
+      <div class="progress-container" id="progress-container" style="display: none;">
+        <div class="progress-bar-glow"></div>
+        <div class="progress-meta">
+          <span class="progress-status-label" id="progress-label">Synthesizing latents...</span>
+          <span class="progress-timer" id="progress-timer">0.0s</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill" style="width: 5%;"></div>
+        </div>
+        <div class="progress-steps-hint" id="progress-step-hint">Step 1 of 25: Initializing diffusion latent space</div>
+      </div>
+
+      <!-- Main Display Area: Empty State / Skeleton / Gallery Grid -->
+      <div class="viewport-canvas" id="viewport-canvas">
+        <!-- Initial Idle State -->
+        <div class="empty-state" id="empty-state">
+          <div class="empty-illustration">
+            <div class="empty-icon-ring">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+          </div>
+          <h3>Canvas is Waiting for Your Imagination</h3>
+          <p>Enter a descriptive prompt on the left, pick an art style, and watch Stable Diffusion transform your words into high-resolution visuals.</p>
+          <div class="feature-badges">
+            <span class="feat-badge">Stable Diffusion v1.5</span>
+            <span class="feat-badge">Cinematic 8K Presets</span>
+            <span class="feat-badge">Negative Tag Guidance</span>
+            <span class="feat-badge">ZIP Batch Export</span>
+          </div>
+        </div>
+
+        <!-- Active Gallery Grid -->
+        <div class="gallery-grid" id="gallery-grid" style="display: none;">
+          <!-- Dynamically inserted image cards -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Interactive Lightbox & Metadata Modal -->
+  <div class="modal-backdrop" id="image-modal" style="display: none;">
+    <div class="modal-container">
+      <button class="modal-close-btn" id="btn-modal-close" title="Close Lightbox">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="modal-content-grid">
+        <div class="modal-image-col">
+          <div class="lightbox-img-wrapper">
+            <img src="" alt="Enlarged synthesis preview" id="modal-img">
+          </div>
+        </div>
+
+        <div class="modal-sidebar-col">
+          <div class="modal-meta-header">
+            <h3>Generation Parameters</h3>
+            <span class="meta-badge-time" id="modal-time-badge">2.4s</span>
+          </div>
+
+          <div class="meta-section">
+            <span class="meta-label">Prompt</span>
+            <p class="meta-value prompt-highlight" id="modal-prompt-text"></p>
+            <button type="button" class="copy-meta-btn" id="btn-copy-prompt">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>Copy Prompt</span>
+            </button>
+          </div>
+
+          <div class="meta-section">
+            <span class="meta-label">Negative Prompt</span>
+            <p class="meta-value neg-highlight" id="modal-neg-text"></p>
+          </div>
+
+          <div class="meta-specs-grid">
+            <div class="spec-cell">
+              <span class="spec-name">Art Style</span>
+              <span class="spec-data" id="modal-spec-style">Realistic</span>
+            </div>
+            <div class="spec-cell">
+              <span class="spec-name">Seed</span>
+              <span class="spec-data" id="modal-spec-seed">0</span>
+            </div>
+            <div class="spec-cell">
+              <span class="spec-name">Inference Steps</span>
+              <span class="spec-data" id="modal-spec-steps">25</span>
+            </div>
+            <div class="spec-cell">
+              <span class="spec-name">Guidance (CFG)</span>
+              <span class="spec-data" id="modal-spec-cfg">7.5</span>
+            </div>
+            <div class="spec-cell">
+              <span class="spec-name">Dimensions</span>
+              <span class="spec-data" id="modal-spec-dims">512x512</span>
+            </div>
+            <div class="spec-cell">
+              <span class="spec-name">Engine</span>
+              <span class="spec-data" id="modal-spec-engine">Cloud AI</span>
+            </div>
+          </div>
+
+          <div class="modal-footer-actions">
+            <a href="#" download id="modal-download-btn" class="modal-primary-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Download PNG
+            </a>
+            <button type="button" id="modal-remix-btn" class="modal-secondary-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+              </svg>
+              Remix Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Drawer -->
+  <div class="drawer-backdrop" id="history-drawer-backdrop" style="display: none;">
+    <aside class="drawer-panel" id="history-drawer">
+      <div class="drawer-header">
+        <div class="drawer-title-area">
+          <h3>Generation History</h3>
+          <span class="drawer-count" id="drawer-count-label">0 items</span>
+        </div>
+        <button class="drawer-close-btn" id="btn-close-history">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="drawer-body" id="history-list">
+        <!-- History items dynamically populated -->
+      </div>
+    </aside>
+  </div>
+
+  <!-- Architecture & Documentation Modal -->
+  <div class="modal-backdrop" id="docs-modal" style="display: none;">
+    <div class="modal-container docs-modal-container">
+      <button class="modal-close-btn" id="btn-docs-close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <div class="docs-content">
+        <h2>Exercise 4: AI Image Generation Architecture</h2>
+        <p class="docs-lead">Deep dive into the Text-to-Image diffusion pipeline powering this studio.</p>
+
+        <div class="docs-pipeline-flow">
+          <div class="flow-step">
+            <span class="flow-num">1</span>
+            <h4>CLIP Text Encoder</h4>
+            <p>Converts natural language input into 768-dimensional latent text embeddings using Transformer self-attention.</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <span class="flow-num">2</span>
+            <h4>Latent UNet Denoiser</h4>
+            <p>Performs iterative reverse diffusion in a compressed 64x64 latent space across 20-50 steps with Classifier-Free Guidance.</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <span class="flow-num">3</span>
+            <h4>VAE Decoder</h4>
+            <p>Transforms the final denoised 4-channel latent representation into high-resolution 512x512 RGB pixel image.</p>
+          </div>
+        </div>
+
+        <div class="docs-grid">
+          <div class="doc-card">
+            <h4>Hardware Optimization</h4>
+            <p>To operate seamlessly on systems with 2GB VRAM without encountering CUDA Out-of-Memory (OOM), the engine employs sequential CPU offloading, attention slicing, and FP16 half-precision tensor quantization.</p>
+          </div>
+          <div class="doc-card">
+            <h4>Multi-Engine Acceleration</h4>
+            <p>Users can toggle between local Diffusers inference, ultra-fast cloud diffusion synthesis (sub-3s generation), or procedural canvas fallback.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Custom JavaScript -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

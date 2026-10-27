@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101217">
+  <meta name="description" content="One home for ten generative AI experiments, notebooks, and project studios.">
+  <title>GenAI Lab — Ten experiments, one home</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="{{ url_for('home') }}" aria-label="GenAI Lab home">
+        <span class="brand-mark">G<span>.</span></span>
+        <span>GEN<span class="brand-muted">/</span>AI LAB</span>
+      </a>
+      <nav class="top-nav" aria-label="Main navigation">
+        <a class="active" href="{{ url_for('home') }}">Experiments</a>
+        <a href="#about">About the lab</a>
+      </nav>
+      <a class="top-count" href="#experiments"><span class="status-dot"></span> 10 PROJECTS</a>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-line"></span> A GENERATIVE AI PLAYGROUND</p>
+          <h1>Ten experiments.<br><span>One place to explore.</span></h1>
+          <p class="hero-description">From your first tensor to generated worlds. A single home for every project, notebook, and idea in the GenAI lab.</p>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <a class="button button-primary" href="#experiments">Explore the projects <span aria-hidden="true">↘</span></a>
+            <button class="button button-secondary" type="button" onclick="launchAllStudios()" id="btn-launch-all">🚀 Launch All Studios</button>
+            <button class="button button-secondary" type="button" onclick="stopAllStudios()" id="btn-stop-all" style="display: none;">Stop All</button>
+          </div>
+          <div class="hero-footnote" id="studios-live-note">
+            <span class="status-dot"></span> 10 experiments &nbsp;·&nbsp; 7 runnable studios (Projects 4–10) &nbsp;·&nbsp; <span id="studios-summary-text">Ready to run inside app.py</span>
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="orbit orbit-three"></div>
+          <div class="art-core"><span>GEN</span><strong>AI</strong><i>LAB</i></div>
+          <div class="art-node node-one">IMAGE</div>
+          <div class="art-node node-two">AUDIO</div>
+          <div class="art-node node-three">LANGUAGE</div>
+          <div class="art-node node-four">VIDEO</div>
+        </div>
+        <div class="hero-index"><span>01</span><span class="index-rule"></span><span>10</span></div>
+      </section>
+
+      <section class="experiment-section" id="experiments">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow"><span class="eyebrow-line"></span> THE COLLECTION</p>
+            <h2>Pick a direction.</h2>
+          </div>
+          <p class="section-note">Ten distinct experiments, connected by one curious mind.</p>
+        </div>
+
+        <div class="filter-row" aria-label="Filter experiments">
+          <button class="filter-chip active" type="button" data-category="all">All projects <span>{{ projects|length }}</span></button>
+          {% for category in categories %}
+          <button class="filter-chip" type="button" data-category="{{ category }}">{{ category }}</button>
+          {% endfor %}
+          <label class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input id="project-search" type="search" placeholder="Find an experiment..." aria-label="Search experiments">
+          </label>
+        </div>
+
+        <div class="project-grid" id="project-grid">
+          {% for project in projects %}
+          <a class="project-card" href="{{ url_for('project_' ~ '%02d'|format(project.id)) }}"
+             data-category="{{ project.category }}" data-search="{{ (project.title ~ ' ' ~ project.summary ~ ' ' ~ project.category ~ ' ' ~ project.topics|join(' '))|lower }}">
+            <div class="card-topline">
+              <span class="project-number">{{ project.icon }}</span>
+              <span class="card-category">{{ project.category }}</span>
+              {% if project.runnable %}
+              <span class="card-studio-pill" id="card-studio-{{ project.id }}" title="Studio on port {{ project.port }}">
+                <span class="status-dot dot-inactive" id="card-dot-{{ project.id }}"></span> Studio
+              </span>
+              {% endif %}
+              <span class="card-arrow" aria-hidden="true">↗</span>
+            </div>
+            <div class="card-art card-art-{{ project.gradient }}" aria-hidden="true">
+              <span class="art-index">{{ project.icon }}</span>
+              <span class="art-word">{{ project.short_title }}</span>
+              <span class="art-orb"></span>
+              <span class="art-grid"></span>
+            </div>
+            <div class="card-copy">
+              <h3>{{ project.title }}</h3>
+              <p>{{ project.summary }}</p>
+              <div class="card-bottom">
+                <span>{{ project.files|length }} project resource{% if project.files|length != 1 %}s{% endif %}</span>
+                <span class="card-cta">Explore project <span aria-hidden="true">→</span></span>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        <p class="empty-state" id="empty-state" hidden>No experiments match that search. Try another title or topic.</p>
+      </section>
+
+      <section class="about-strip" id="about">
+        <span class="about-number">10</span>
+        <div>
+          <p class="eyebrow">ONE SHARED WORKSPACE</p>
+          <h2>Learn it. Make it. See what happens.</h2>
+          <p>Browse each experiment from one place. Open its notebook, read the project guide, or explore the original app source where available. Model-backed demos remain in their project folders and can be launched independently.</p>
+        </div>
+        <a class="text-link" href="{{ url_for('projects_api') }}">Project index <span aria-hidden="true">↗</span></a>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <a class="brand brand-small" href="{{ url_for('home') }}"><span class="brand-mark">G<span>.</span></span><span>GEN<span class="brand-muted">/</span>AI LAB</span></a>
+      <span>Ten experiments, connected.</span>
+      <a href="#experiments">Back to the top ↑</a>
+    </footer>
+  </div>
+  <script>
+    const cards = [...document.querySelectorAll(".project-card")];
+    const filters = [...document.querySelectorAll(".filter-chip")];
+    const search = document.querySelector("#project-search");
+    const emptyState = document.querySelector("#empty-state");
+    let activeCategory = "all";
+    function updateCards() {
+      const query = search.value.trim().toLowerCase();
+      let visibleCount = 0;
+      for (const card of cards) {
+        const matchesCategory = activeCategory === "all" || card.dataset.category === activeCategory;
+        const matchesSearch = !query || card.dataset.search.includes(query);
+        card.hidden = !(matchesCategory && matchesSearch);
+        visibleCount += Number(!card.hidden);
+      }
+      emptyState.hidden = visibleCount !== 0;
+    }
+    for (const filter of filters) {
+      filter.addEventListener("click", () => {
+        activeCategory = filter.dataset.category;
+        for (const button of filters) button.classList.toggle("active", button === filter);
+        updateCards();
+      });
+    }
+    search.addEventListener("input", updateCards);
+
+    // Studio management and status polling
+    async function checkStudios() {
+      try {
+        const res = await fetch('/api/studio/statuses');
+        const data = await res.json();
+        let runningCount = 0;
+        for (const [pid, info] of Object.entries(data)) {
+          const dot = document.getElementById(`card-dot-${pid}`);
+          const pill = document.getElementById(`card-studio-${pid}`);
+          if (dot && pill) {
+            if (info.running) {
+              dot.className = 'status-dot dot-active';
+              pill.className = 'card-studio-pill active';
+              pill.title = `Running on port ${info.port} — Click to enter`;
+              runningCount++;
+            } else {
+              dot.className = 'status-dot dot-inactive';
+              pill.className = 'card-studio-pill';
+              pill.title = `Offline (Port ${info.port})`;
+            }
+          }
+        }
+        const note = document.getElementById('studios-summary-text');
+        const stopBtn = document.getElementById('btn-stop-all');
+        if (note) {
+          if (runningCount > 0) {
+            note.innerHTML = `<strong style="color: #10b981;">${runningCount} of 7 studios live</strong>`;
+          } else {
+            note.textContent = 'All studios ready to run inside app.py';
+          }
+        }
+        if (stopBtn) {
+          stopBtn.style.display = runningCount > 0 ? 'inline-flex' : 'none';
+        }
+      } catch (e) {
+        console.debug('Studio status check:', e);
+      }
+    }
+
+    async function launchAllStudios() {
+      const btn = document.getElementById('btn-launch-all');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = 'Starting all studios...';
+      btn.disabled = true;
+      try {
+        await fetch('/api/studio/start-all', { method: 'POST' });
+        setTimeout(checkStudios, 1200);
+      } catch (e) {
+        console.error('Launch all failed:', e);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function stopAllStudios() {
+      const btn = document.getElementById('btn-stop-all');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = 'Stopping...';
+      btn.disabled = true;
+      try {
+        await fetch('/api/studio/stop-all', { method: 'POST' });
+        setTimeout(checkStudios, 800);
+      } catch (e) {
+        console.error('Stop all failed:', e);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    checkStudios();
+    setInterval(checkStudios, 4000);
+  </script>
+</body>
+</html>

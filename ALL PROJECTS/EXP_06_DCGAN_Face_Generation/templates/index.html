@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DCGAN Face Synthesis Studio | CelebA (Experiment 6)</title>
+  <meta name="description" content="Deep Convolutional GAN (DCGAN) Face Generation Studio trained on CelebA dataset. Built for GenAI Experiment 6.">
+  <meta name="keywords" content="DCGAN, GAN, Face Generation, CelebA, Latent Space Morphing, GenAI, Experiment 6">
+  <meta name="author" content="GenAI Lab">
+
+  <!-- Google Fonts: Outfit, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Ambient Gold / Amber Studio Light Rays -->
+  <div class="ambient-glow glow-amber"></div>
+  <div class="ambient-glow glow-crimson"></div>
+  <div class="ambient-glow glow-indigo"></div>
+
+  <!-- Header -->
+  <header class="app-header" id="app-header">
+    <div class="header-container">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <!-- Portrait / Neural Face Icon -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>FaceGen <span>Studio</span></h1>
+          <span class="badge-exercise">Experiment 6 · DCGAN Face Synthesis (CelebA)</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Telemetry Pill -->
+        <div class="telemetry-pill" id="telemetry-pill" title="DCGAN Architecture Telemetry">
+          <span class="pulse-dot active" id="telemetry-dot"></span>
+          <span class="telemetry-label" id="telemetry-label">DCGAN · 100-D Latent Space</span>
+        </div>
+
+        <button class="nav-btn" id="btn-open-history" title="View Generated Faces Gallery">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          <span>Portrait Vault</span>
+          <span class="badge-count" id="history-badge">0</span>
+        </button>
+
+        <button class="nav-btn" id="btn-open-docs" title="Theory & DCGAN Architecture">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span>Theory & Math</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Studio Navigation Tabs -->
+  <div class="mode-tabs-wrapper">
+    <div class="mode-tabs">
+      <button class="tab-btn active" id="tab-btn-synthesis" data-tab="synthesis">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M8 12h8M12 8v8"/>
+        </svg>
+        <span>Face Synthesis Studio</span>
+      </button>
+      <button class="tab-btn" id="tab-btn-morph" data-tab="morph">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+        </svg>
+        <span>Latent Space Morphing Lab</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <main class="studio-layout" id="main-studio">
+    <!-- Left Column: Generator Controls -->
+    <section class="control-panel glass-panel" id="control-panel">
+      <!-- Tab 1: Synthesis Controls -->
+      <div class="tab-pane active" id="pane-synthesis">
+        <div class="panel-header">
+          <h2>Latent Vector Generator</h2>
+          <span class="panel-subtitle">Sample $z \sim \mathcal{N}(0, I_{100})$ through DCGAN Generator</span>
+        </div>
+
+        <form id="face-form" onsubmit="return false;">
+          <!-- Batch Count -->
+          <div class="form-group">
+            <label>Batch Size (Faces per Generation)</label>
+            <div class="count-selector" id="count-selector">
+              <button type="button" class="count-pill" data-count="1">1 Face</button>
+              <button type="button" class="count-pill active" data-count="4">4 Faces</button>
+              <button type="button" class="count-pill" data-count="8">8 Faces</button>
+              <button type="button" class="count-pill" data-count="16">16 Grid</button>
+            </div>
+            <input type="hidden" id="count-input" value="4">
+          </div>
+
+          <!-- Resolution Selector -->
+          <div class="form-group">
+            <label>Output Resolution & Filtering</label>
+            <div class="res-selector" id="res-selector">
+              <button type="button" class="res-pill" data-scale="1">
+                <span class="res-name">64 x 64</span>
+                <span class="res-tag">Native CelebA</span>
+              </button>
+              <button type="button" class="res-pill active" data-scale="2">
+                <span class="res-name">128 x 128</span>
+                <span class="res-tag">Enhanced HD</span>
+              </button>
+              <button type="button" class="res-pill" data-scale="4">
+                <span class="res-name">256 x 256</span>
+                <span class="res-tag">Lanczos Ultra</span>
+              </button>
+            </div>
+            <input type="hidden" id="scale-input" value="2">
+          </div>
+
+          <!-- Temperature / Truncation Trick Slider -->
+          <div class="form-group">
+            <div class="slider-header">
+              <label for="temp-slider">Diversity vs Quality (Truncation $\psi$)</label>
+              <span class="slider-val" id="temp-val">1.00</span>
+            </div>
+            <input type="range" id="temp-slider" min="0.3" max="1.8" step="0.05" value="1.0">
+            <div class="slider-ticks">
+              <span>0.3 (High Fidelity)</span>
+              <span>1.0 (Standard)</span>
+              <span>1.8 (High Diversity)</span>
+            </div>
+          </div>
+
+          <!-- Seed Input -->
+          <div class="form-group">
+            <div class="slider-header">
+              <label for="seed-input">Random Seed (-1 for Dynamic Noise)</label>
+              <button type="button" class="action-link" id="btn-random-seed">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="2" width="20" height="20" rx="5"/>
+                  <circle cx="8" cy="8" r="1.5"/>
+                  <circle cx="16" cy="16" r="1.5"/>
+                  <circle cx="12" cy="12" r="1.5"/>
+                </svg>
+                Roll Dice
+              </button>
+            </div>
+            <div class="seed-input-wrapper">
+              <input type="number" id="seed-input" value="-1" placeholder="-1 (Dynamic Random)">
+              <button type="button" class="seed-lock-btn" id="btn-lock-seed" title="Lock seed for deterministic reproduction">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Generate Button -->
+          <div class="submit-row">
+            <button type="submit" class="generate-btn" id="btn-generate">
+              <span class="btn-glow"></span>
+              <span class="btn-text">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                </svg>
+                <span>Generate Synthetic Faces</span>
+              </span>
+              <span class="keyboard-shortcut">Ctrl+Enter</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tab 2: Morphing Lab Controls -->
+      <div class="tab-pane" id="pane-morph">
+        <div class="panel-header">
+          <h2>Latent Space Morphing Lab</h2>
+          <span class="panel-subtitle">Continuous geodesic trajectory $z_A \to z_B$ via Spherical Interpolation</span>
+        </div>
+
+        <form id="morph-form" onsubmit="return false;">
+          <div class="dual-row-group">
+            <div class="form-group half-group">
+              <div class="slider-header">
+                <label for="morph-seed-a">Identity A Seed</label>
+                <button type="button" class="action-link" id="btn-dice-a">Dice</button>
+              </div>
+              <input type="number" id="morph-seed-a" class="styled-input" value="42">
+            </div>
+            <div class="form-group half-group">
+              <div class="slider-header">
+                <label for="morph-seed-b">Identity B Seed</label>
+                <button type="button" class="action-link" id="btn-dice-b">Dice</button>
+              </div>
+              <input type="number" id="morph-seed-b" class="styled-input" value="100">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="slider-header">
+              <label for="morph-steps-slider">Intermediate Morph Steps</label>
+              <span class="slider-val" id="morph-steps-val">16 Steps</span>
+            </div>
+            <input type="range" id="morph-steps-slider" min="8" max="32" step="4" value="16">
+            <span class="slider-hint">Number of geodesic latent points along the transition path</span>
+          </div>
+
+          <div class="form-group">
+            <div class="slider-header">
+              <label for="morph-fps-slider">Playback Frame Rate (FPS)</label>
+              <span class="slider-val" id="morph-fps-val">12 FPS</span>
+            </div>
+            <input type="range" id="morph-fps-slider" min="6" max="24" step="2" value="12">
+            <span class="slider-hint">Controls the morphing loop transition speed</span>
+          </div>
+
+          <div class="submit-row">
+            <button type="submit" class="generate-btn morph-btn" id="btn-generate-morph">
+              <span class="btn-glow"></span>
+              <span class="btn-text">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <span>Compute Latent Geodesic & Morph</span>
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Right Column: Screening Viewport & Face Gallery -->
+    <section class="viewport-panel glass-panel" id="viewport-panel">
+      <div class="viewport-header">
+        <div class="header-left">
+          <h3 id="viewport-title">Synthetic Face Gallery</h3>
+          <span class="status-indicator" id="status-text">Ready to synthesize faces</span>
+        </div>
+        <div class="header-right" id="viewport-actions" style="display: none;">
+          <button class="action-btn-pill" id="btn-download-all">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Download Batch</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading Bar -->
+      <div class="progress-bar-container" id="progress-container" style="display: none;">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+
+      <!-- Main Stage -->
+      <div class="stage-container" id="stage-container">
+        <!-- Face Grid View -->
+        <div class="face-grid" id="face-grid"></div>
+
+        <!-- Morph Screen View (Initially Hidden) -->
+        <div class="morph-view" id="morph-view" style="display: none;">
+          <div class="morph-preview-card">
+            <div class="morph-media-wrapper">
+              <img id="morph-img" src="" alt="Latent Space Morphing Animation" />
+            </div>
+            <div class="morph-meta">
+              <div class="morph-meta-header">
+                <h4>Latent Space Geodesic Trajectory</h4>
+                <span class="morph-badge" id="morph-steps-badge">16 Steps @ 12 FPS</span>
+              </div>
+              <p class="morph-math">
+                $$z(t) = \frac{\sin((1-t)\theta)}{\sin\theta} z_A + \frac{\sin(t\theta)}{\sin\theta} z_B$$
+              </p>
+              <div class="morph-actions">
+                <a href="#" class="action-btn-pill" id="btn-download-gif" download>Download Morph GIF</a>
+                <a href="#" class="action-btn-pill secondary" id="btn-download-webp" download>Download WebP</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Morph Frame Track -->
+          <div class="morph-track-container">
+            <h4>Trajectory Intermediate Frames</h4>
+            <div class="morph-frames-strip" id="morph-frames-strip"></div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon-ring">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <h3>DCGAN Latent Space Awaiting Sampling</h3>
+          <p>Choose a batch size on the left, roll a seed, and click "Generate Synthetic Faces" to map 100-dimensional Gaussian latent vectors into photo-realistic celebrity faces.</p>
+          <div class="feature-badges">
+            <span class="feat-badge">DCGAN Architecture</span>
+            <span class="feat-badge">CelebA Weights</span>
+            <span class="feat-badge">SLERP Interpolation</span>
+            <span class="feat-badge">Batch Synthesis</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- History Drawer -->
+  <div class="drawer-backdrop" id="history-backdrop" style="display: none;">
+    <aside class="drawer-panel" id="history-drawer">
+      <div class="drawer-header">
+        <div class="drawer-title-area">
+          <h3>Portrait Vault</h3>
+          <span class="drawer-count" id="drawer-count">0 faces</span>
+        </div>
+        <button class="drawer-close-btn" id="btn-close-history">✕</button>
+      </div>
+      <div class="drawer-body" id="history-list"></div>
+    </aside>
+  </div>
+
+  <!-- Theory & Math Modal -->
+  <div class="modal-backdrop" id="docs-modal" style="display: none;">
+    <div class="modal-container">
+      <button class="modal-close-btn" id="btn-close-docs">✕</button>
+      <div class="docs-content">
+        <h2>Experiment 6: DCGAN Theory & Architecture</h2>
+        <p class="docs-lead">Deep Convolutional Generative Adversarial Networks on the CelebA Dataset (by Dr. Sachin Balawant Takmare)</p>
+
+        <div class="theory-grid">
+          <div class="theory-card">
+            <h4>1. Minimax Adversarial Game</h4>
+            <p>The Generator $G$ and Discriminator $D$ are trained simultaneously in a zero-sum competition:</p>
+            <code>min_G max_D E[log D(x)] + E[log(1 - D(G(z)))]</code>
+            <p>Over training iterations, $G$ learns to model the true data distribution $p_{data}$ of human faces.</p>
+          </div>
+          <div class="theory-card">
+            <h4>2. Generator Transposed Convolutions</h4>
+            <p>Replaces fully connected layers with fractional-strided convolutions (ConvTranspose2d):</p>
+            <ul>
+              <li>Input: <code>z ~ N(0, I)</code> (100-D vector)</li>
+              <li>Project & reshape: <code>100 -> 512 x 4 x 4</code></li>
+              <li>Up-conv layers: <code>4x4 -> 8x8 -> 16x16 -> 32x32 -> 64x64</code></li>
+              <li>Output activation: <code>Tanh</code> in range [-1, 1]</li>
+            </ul>
+          </div>
+          <div class="theory-card">
+            <h4>3. Stabilization Guidelines (Radford et al.)</h4>
+            <ul>
+              <li>Batch Normalization in both Generator and Discriminator</li>
+              <li>ReLU activation in Generator for all layers except output (Tanh)</li>
+              <li>LeakyReLU (0.2) activation in Discriminator</li>
+              <li>Adam optimizer with $\beta_1 = 0.5$ for momentum stabilization</li>
+            </ul>
+          </div>
+          <div class="theory-card">
+            <h4>4. Latent Space Continuity & SLERP</h4>
+            <p>Because the latent space is continuous, interpolating between two latent points $z_A$ and $z_B$ via Spherical Linear Interpolation (SLERP) produces smooth, believable identity transitions without unnatural distortion.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Client Script -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

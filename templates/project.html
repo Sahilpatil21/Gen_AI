@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101217">
+  <meta name="description" content="{{ project.summary }}">
+  <title>{{ project.title }} — GenAI Lab</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="{{ url_for('home') }}" aria-label="GenAI Lab home">
+        <span class="brand-mark">G<span>.</span></span>
+        <span>GEN<span class="brand-muted">/</span>AI LAB</span>
+      </a>
+      <nav class="top-nav" aria-label="Main navigation">
+        <a href="{{ url_for('home') }}">Experiments</a>
+        <a class="active" href="#project-content">Project {{ '%02d'|format(project.id) }}</a>
+      </nav>
+      <a class="top-count" href="{{ url_for('home') }}"><span aria-hidden="true">←</span> ALL PROJECTS</a>
+    </header>
+
+    <main class="detail-main" id="project-content">
+      <div class="breadcrumb"><a href="{{ url_for('home') }}">Experiments</a><span>/</span><span>{{ '%02d'|format(project.id) }}</span></div>
+      <section class="detail-hero">
+        <div class="detail-copy">
+          <p class="eyebrow"><span class="eyebrow-line"></span> EXPERIMENT {{ '%02d'|format(project.id) }} <span class="detail-category">{{ project.category }}</span></p>
+          <h1>{{ project.title }}</h1>
+          <p class="detail-summary">{{ project.summary }}</p>
+          <div class="topic-list">
+            {% for topic in project.topics %}<span>{{ topic }}</span>{% endfor %}
+          </div>
+        </div>
+        <div class="detail-art card-art-{{ project.gradient }}" aria-hidden="true">
+          <span class="detail-art-index">{{ project.icon }}</span>
+          <span class="detail-art-title">{{ project.short_title }}</span>
+          <span class="art-orb"></span>
+          <span class="art-grid"></span>
+        </div>
+      </section>
+
+      {% if project.runnable %}
+      <section class="studio-embed-section" id="live-studio-section">
+        <div class="studio-embed-header">
+          <div class="studio-status-indicator">
+            <span class="status-dot dot-inactive" id="studio-status-dot"></span>
+            <strong id="studio-status-text">Studio Starting...</strong>
+            <span class="studio-port-tag">PORT {{ project.port }}</span>
+          </div>
+          <div class="studio-embed-actions">
+            <button class="button button-sm button-secondary" id="btn-toggle-studio" onclick="toggleStudio()">Launch Studio</button>
+            <button class="button button-sm button-secondary" id="btn-restart-studio" onclick="restartStudio()" style="display: none;">Restart</button>
+            <a class="button button-sm button-primary" id="btn-open-external" href="http://127.0.0.1:{{ project.port }}" target="_blank" rel="noopener">Open Studio in New Tab <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+
+        <div class="studio-frame-container" id="studio-frame-wrapper">
+          <div class="studio-loading-state" id="studio-loading-indicator">
+            <div class="spinner"></div>
+            <p id="loading-msg">Connecting to {{ project.title }} studio...</p>
+            <small>Automatically launching background server on port {{ project.port }}</small>
+          </div>
+          <iframe id="live-studio-frame" src="" title="{{ project.title }} Studio" style="display: none;"></iframe>
+        </div>
+      </section>
+      {% endif %}
+
+      <div class="detail-layout">
+        <section class="detail-panel overview-panel">
+          <p class="eyebrow">THE IDEA</p>
+          <h2>What you'll explore</h2>
+          <p class="body-copy">{{ project.description }}</p>
+          <h3 class="subheading">A simple workflow</h3>
+          <ol class="workflow-list">
+            {% for step in project.workflow %}
+            <li><span>{{ '%02d'|format(loop.index) }}</span>{{ step }}</li>
+            {% endfor %}
+          </ol>
+        </section>
+
+        <aside class="detail-panel resources-panel">
+          {% if project.runnable %}
+          <div class="run-studio-box">
+            <div class="run-studio-header">
+              <span class="status-dot"></span>
+              <strong>RUN IN TERMINAL (OPTIONAL)</strong>
+            </div>
+            <p class="run-studio-desc">Studio runs automatically above! Or run in terminal:</p>
+            <div class="run-cmd-block">
+              <code>python run_project.py {{ project.id }}</code>
+            </div>
+          </div>
+          {% endif %}
+
+          <p class="eyebrow" style="margin-top: 24px;">PROJECT FILES</p>
+          <h2>Start exploring</h2>
+          {% if project.files %}
+          <div class="resource-list">
+            {% for file in project.files %}
+            <a class="resource-link" href="{{ url_for('project_file', project_id=project.id, filename=file.path) }}">
+              <span class="resource-icon">{% if file.kind == 'NOTEBOOK' %}NB{% elif file.kind == 'README' %}MD{% elif file.kind == 'RUNNER' %}RUN{% else %}PY{% endif %}</span>
+              <span class="resource-label"><strong>{{ file.name }}</strong><small>{{ file.kind }} · {{ file.path }}</small></span>
+              <span class="resource-download" aria-hidden="true">↓</span>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="body-copy">Project files are not available in this workspace.</p>
+          {% endif %}
+          <div class="resource-note"><span class="status-dot"></span> Files and runners are self-contained in ALL PROJECTS.</div>
+        </aside>
+      </div>
+
+      <nav class="project-pagination" aria-label="Project navigation">
+        {% if project.previous %}
+        <a href="{{ project_url(project.previous) }}"><span>← PREVIOUS EXPERIMENT</span><strong>{{ project.previous.title }}</strong></a>
+        {% else %}<a href="{{ url_for('home') }}"><span>← BACK TO COLLECTION</span><strong>All experiments</strong></a>{% endif %}
+        {% if project.next %}
+        <a class="pagination-next" href="{{ project_url(project.next) }}"><span>NEXT EXPERIMENT →</span><strong>{{ project.next.title }}</strong></a>
+        {% endif %}
+      </nav>
+    </main>
+
+    <footer class="footer">
+      <a class="brand brand-small" href="{{ url_for('home') }}"><span class="brand-mark">G<span>.</span></span><span>GEN<span class="brand-muted">/</span>AI LAB</span></a>
+      <span>Experiment {{ '%02d'|format(project.id) }} of 10</span>
+      <a href="{{ url_for('home') }}">All projects ↑</a>
+    </footer>
+  </div>
+
+  <script>
+    const PROJECT_ID = {{ project.id }};
+    const PROJECT_PORT = {{ project.port or 'null' }};
+    const IS_RUNNABLE = {{ 'true' if project.runnable else 'false' }};
+
+    async function checkStatus() {
+      if (!IS_RUNNABLE) return;
+      try {
+        const res = await fetch(`/api/studio/${PROJECT_ID}/status`);
+        const data = await res.json();
+        updateUI(data.running, data.url);
+      } catch (e) {
+        console.error("Status check failed:", e);
+      }
+    }
+
+    function updateUI(isRunning, url) {
+      const dot = document.getElementById('studio-status-dot');
+      const text = document.getElementById('studio-status-text');
+      const toggleBtn = document.getElementById('btn-toggle-studio');
+      const restartBtn = document.getElementById('btn-restart-studio');
+      const iframe = document.getElementById('live-studio-frame');
+      const loader = document.getElementById('studio-loading-indicator');
+
+      if (!dot || !text) return;
+
+      if (isRunning) {
+        dot.className = 'status-dot dot-active';
+        text.innerText = `Studio Active on Port ${PROJECT_PORT}`;
+        toggleBtn.innerText = 'Stop Studio';
+        toggleBtn.className = 'button button-sm button-danger';
+        restartBtn.style.display = 'inline-flex';
+
+        const targetUrl = url || `http://127.0.0.1:${PROJECT_PORT}/`;
+        if (!iframe.src || iframe.src === 'about:blank' || !iframe.src.includes(PROJECT_PORT)) {
+          iframe.src = targetUrl;
+        }
+        loader.style.display = 'none';
+        iframe.style.display = 'block';
+      } else {
+        dot.className = 'status-dot dot-inactive';
+        text.innerText = `Studio Offline (Port ${PROJECT_PORT})`;
+        toggleBtn.innerText = 'Launch Studio';
+        toggleBtn.className = 'button button-sm button-primary';
+        restartBtn.style.display = 'none';
+        loader.style.display = 'flex';
+        document.getElementById('loading-msg').innerText = 'Studio is stopped. Click "Launch Studio" to start.';
+        iframe.style.display = 'none';
+      }
+    }
+
+    async function toggleStudio() {
+      const toggleBtn = document.getElementById('btn-toggle-studio');
+      const isStarting = toggleBtn.innerText.includes('Launch') || toggleBtn.innerText.includes('Start');
+      const action = isStarting ? 'start' : 'stop';
+
+      document.getElementById('loading-msg').innerText = isStarting ? 'Starting Studio... please wait a moment' : 'Stopping Studio...';
+      document.getElementById('studio-loading-indicator').style.display = 'flex';
+      document.getElementById('live-studio-frame').style.display = 'none';
+
+      try {
+        await fetch(`/api/studio/${PROJECT_ID}/${action}`, { method: 'POST' });
+        setTimeout(checkStatus, 1200);
+      } catch (e) {
+        alert('Action failed: ' + e);
+        checkStatus();
+      }
+    }
+
+    async function restartStudio() {
+      document.getElementById('loading-msg').innerText = 'Restarting Studio...';
+      document.getElementById('studio-loading-indicator').style.display = 'flex';
+      document.getElementById('live-studio-frame').style.display = 'none';
+      await fetch(`/api/studio/${PROJECT_ID}/stop`, { method: 'POST' });
+      setTimeout(async () => {
+        await fetch(`/api/studio/${PROJECT_ID}/start`, { method: 'POST' });
+        setTimeout(checkStatus, 1500);
+      }, 500);
+    }
+
+    if (IS_RUNNABLE) {
+      // Auto-start studio upon viewing this project page!
+      fetch(`/api/studio/${PROJECT_ID}/start`, { method: 'POST' })
+        .then(() => setTimeout(checkStatus, 1200))
+        .catch(() => checkStatus());
+
+      setInterval(checkStatus, 4000);
+    }
+  </script>
+</body>
+</html>

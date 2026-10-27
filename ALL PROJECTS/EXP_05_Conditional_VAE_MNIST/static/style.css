@@ -1,0 +1,166 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+}
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+}
+
+.card {
+    width: 100%;
+    max-width: 720px;
+    background: white;
+    border-radius: 18px;
+    padding: 35px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+    text-align: center;
+    margin: 0 0 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #6b7280;
+    line-height: 1.6;
+}
+
+.section {
+    margin-top: 30px;
+}
+
+.section h2,
+.image-section h2 {
+    text-align: center;
+}
+
+.digit-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.digit-btn {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    font-size: 22px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.digit-btn:hover {
+    transform: translateY(-2px);
+}
+
+.digit-btn.active {
+    background: #111827;
+    color: white;
+    border-color: #111827;
+}
+
+.selected-info {
+    text-align: center;
+    margin: 25px 0;
+    font-size: 18px;
+}
+
+#selectedDigit {
+    font-weight: bold;
+    font-size: 24px;
+}
+
+#generateBtn {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 10px;
+    padding: 15px;
+    background: #111827;
+    color: white;
+    font-size: 17px;
+    cursor: pointer;
+}
+
+#generateBtn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.loading {
+    text-align: center;
+    margin-top: 15px;
+    color: #4b5563;
+}
+
+.error {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #991b1b;
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.image-section {
+    margin-top: 30px;
+}
+
+.image-box {
+    min-height: 310px;
+    border: 2px dashed #d1d5db;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: #fafafa;
+}
+
+#generatedImage {
+    display: none;
+    width: 280px;
+    height: 280px;
+    image-rendering: pixelated;
+    background: white;
+    border: 1px solid #e5e7eb;
+}
+
+#placeholder {
+    color: #9ca3af;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .card {
+        padding: 22px;
+    }
+
+    .digit-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+    }
+
+    .digit-btn {
+        padding: 12px 5px;
+    }
+}

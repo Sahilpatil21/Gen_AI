@@ -1,0 +1,12 @@
+streamlit>=1.36
+torch>=2.2
+transformers>=4.44,<5.0
+sentence-transformers>=3.0
+numpy>=1.26
+pypdf>=4.2
+python-docx>=1.1
+accelerate>=0.33
+datasets>=2.20
+peft>=0.12
+# Optional for QLoRA; install only on a compatible CUDA environment:
+# bitsandbytes>=0.43

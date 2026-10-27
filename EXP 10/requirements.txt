@@ -1,0 +1,10 @@
+# Experiment 10: Generation of Videos from Text Prompts using a Pretrained Open-Source Video Generation Foundation Model
+torch>=2.0.0
+transformers>=4.30.0
+diffusers>=0.20.0
+accelerate>=0.20.0
+opencv-python>=4.8.0
+Pillow>=9.5.0
+flask>=2.3.0
+gradio>=4.0.0
+numpy>=1.24.0

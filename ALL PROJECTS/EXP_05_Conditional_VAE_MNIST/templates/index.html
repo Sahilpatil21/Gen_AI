@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVAE MNIST Digit Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>CVAE Digit Generator</h1>
+        <p class="subtitle">
+            Select a number and generate a new MNIST-style handwritten image
+            using a Conditional VAE decoder.
+        </p>
+
+        <div class="section">
+            <h2>Select a Digit</h2>
+            <div class="digit-grid">
+                {% for digit in range(10) %}
+                <button class="digit-btn{% if digit == 0 %} active{% endif %}" data-digit="{{ digit }}">
+                    {{ digit }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="selected-info">
+            Selected Number: <span id="selectedDigit">0</span>
+        </div>
+
+        <button id="generateBtn">Generate Image</button>
+
+        <div id="loading" class="loading hidden">Generating image...</div>
+        <div id="error" class="error hidden"></div>
+
+        <div class="image-section">
+            <h2>Generated Image</h2>
+            <div class="image-box">
+                <img id="generatedImage" src="" alt="Generated digit">
+                <p id="placeholder">Your generated image will appear here</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedDigit = 0;
+
+const digitButtons = document.querySelectorAll(".digit-btn");
+const selectedDigitText = document.getElementById("selectedDigit");
+const generateBtn = document.getElementById("generateBtn");
+const generatedImage = document.getElementById("generatedImage");
+const placeholder = document.getElementById("placeholder");
+const loading = document.getElementById("loading");
+const errorBox = document.getElementById("error");
+
+digitButtons.forEach(button => {
+    button.addEventListener("click", function () {
+        digitButtons.forEach(btn => btn.classList.remove("active"));
+        this.classList.add("active");
+        selectedDigit = Number(this.dataset.digit);
+        selectedDigitText.textContent = selectedDigit;
+        errorBox.classList.add("hidden");
+    });
+});
+
+generateBtn.addEventListener("click", async function () {
+    loading.classList.remove("hidden");
+    errorBox.classList.add("hidden");
+    generateBtn.disabled = true;
+
+    try {
+        const response = await fetch("/generate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({digit: selectedDigit})
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || "Generation failed.");
+        }
+
+        generatedImage.src = "data:image/png;base64," + data.image;
+        generatedImage.style.display = "block";
+        placeholder.style.display = "none";
+    } catch (error) {
+        errorBox.textContent = "Error: " + error.message;
+        errorBox.classList.remove("hidden");
+    } finally {
+        loading.classList.add("hidden");
+        generateBtn.disabled = false;
+    }
+});
+</script>
+</body>
+</html>

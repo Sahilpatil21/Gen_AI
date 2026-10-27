@@ -1,0 +1,7 @@
+[
+  "Explain RAG in two sentences.",
+  "What is the difference between LoRA and QLoRA?",
+  "What should the assistant do when documents do not contain the answer?",
+  "Why are source citations useful in a RAG system?",
+  "Explain parameter-efficient fine-tuning to a beginner."
+]
